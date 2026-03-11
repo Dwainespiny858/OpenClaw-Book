@@ -1,0 +1,98 @@
+\chapter{Agent (AI Assistant)}
+
+\section{Overview}
+
+An Agent is a fully self-contained ``brain'' in OpenClaw, with its own:
+
+\begin{itemize}
+  \item \textbf{Workspace} (files, AGENTS.md/SOUL.md/USER.md, local notes, persona rules)
+  \item \textbf{State directory} (\texttt{agentDir}): authentication config, model registry
+  \item \textbf{Session storage} (chat history + routing state): \texttt{\textasciitilde{}/.openclaw/agents/<id>/sessions}
+\end{itemize}
+
+Config path: \texttt{agents.list[]}
+
+\section{Single-Agent Mode (Default)}
+
+Without any configuration, OpenClaw runs a single agent:
+
+\begin{itemize}
+  \item \texttt{agentId} defaults to \texttt{main}
+  \item Workspace defaults to \texttt{\textasciitilde{}/.openclaw/workspace}
+  \item State defaults to \texttt{\textasciitilde{}/.openclaw/agents/main/agent}
+\end{itemize}
+
+\section{Multi-Agent Mode}
+
+The Gateway can host multiple agents running in parallel, each with:
+
+\begin{itemize}
+  \item Different workspaces and personas (AGENTS.md, SOUL.md)
+  \item Independent authentication and sessions
+  \item Independent Skills
+\end{itemize}
+
+\subsection{Adding an Agent}
+
+\begin{lstlisting}[language=bash]
+openclaw agents add work
+openclaw agents list --bindings
+\end{lstlisting}
+
+\subsection{Configuration Example}
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    list: [
+      {
+        id: "home",
+        default: true,
+        name: "Home",
+        workspace: "~/.openclaw/workspace-home"
+      },
+      {
+        id: "work",
+        name: "Work",
+        workspace: "~/.openclaw/workspace-work"
+      }
+    ]
+  }
+}
+\end{lstlisting}
+
+\section{Workspace Files}
+
+The workspace is the agent's home directory, containing the following standard files:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{File} & \textbf{Purpose} \\
+\midrule
+\texttt{AGENTS.md} & Operating instructions (loaded at session start) \\
+\texttt{SOUL.md} & Persona, tone, and boundaries \\
+\texttt{USER.md} & User preferences \\
+\texttt{memory/} & Memory files directory \\
+\texttt{skills/} & Per-agent Skills \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Agent Timeout}
+
+\begin{itemize}
+  \item Default timeout: \texttt{agents.defaults.timeoutSeconds} (default 600 seconds)
+  \item \texttt{agent.wait} timeout: default 30 seconds (waits only, does not stop the agent)
+\end{itemize}
+
+\section{Common Commands}
+
+\begin{lstlisting}[language=bash]
+# Run agent directly (no inbound chat)
+openclaw agent --to +15555550123 --message "status update"
+openclaw agent --agent ops --message "Summarize logs"
+
+# List agents
+openclaw agents list --bindings
+\end{lstlisting}

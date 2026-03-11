@@ -1,0 +1,114 @@
+\chapter{Channel (Platform Adapter)}
+
+\section{Overview}
+
+A Channel is the adapter between OpenClaw and a chat platform. Each channel is responsible for:
+
+\begin{itemize}
+  \item Receiving inbound platform messages and converting them to a unified format
+  \item Sending agent replies back to the corresponding platform
+  \item Handling platform-specific features (attachments, reactions, threads, etc.)
+\end{itemize}
+
+Config path: \texttt{channels.<name>.*}
+
+\section{Built-in Channels}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Channel ID} & \textbf{Platform} & \textbf{Login Method} \\
+\midrule
+\texttt{whatsapp} & WhatsApp & QR code pairing \\
+\texttt{telegram} & Telegram & Bot Token \\
+\texttt{discord} & Discord & Bot Token \\
+\texttt{slack} & Slack & OAuth/Token \\
+\texttt{signal} & Signal & Pairing \\
+\texttt{imessage} & iMessage (legacy) & macOS \\
+\texttt{bluebubbles} & iMessage (recommended) & BlueBubbles server \\
+\texttt{webchat} & Web Chat & Built-in \\
+\texttt{googlechat} & Google Chat & Service Account \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Plugins can add more channels (e.g., Mattermost, Zalo, WeChat, etc.).
+
+\section{Channel Login}
+
+\begin{lstlisting}[language=bash]
+# Interactive login (all channels)
+openclaw channels login
+
+# Channel-specific
+openclaw channels login --channel telegram
+openclaw channels login --channel discord
+
+# Check status
+openclaw channels status --probe
+\end{lstlisting}
+
+\section{Access Control}
+
+Each channel supports \textbf{DM policy} and \textbf{group policy}:
+
+\subsection{DM Policy (dmPolicy)}
+
+\begin{itemize}
+  \item \texttt{pairing} (default): Unknown senders receive a pairing code; communication requires approval
+  \item \texttt{allowlist}: Only users on the allowlist
+  \item \texttt{open}: Anyone can DM
+  \item \texttt{disabled}: DMs disabled
+\end{itemize}
+
+\subsection{Group Policy (groupPolicy)}
+
+\begin{itemize}
+  \item \texttt{allowlist} (default): Only groups on the allowlist
+  \item \texttt{open}: All groups
+  \item \texttt{disabled}: Groups disabled
+\end{itemize}
+
+\subsection{Configuration Example}
+
+\begin{lstlisting}[language=json]
+{
+  channels: {
+    whatsapp: {
+      dmPolicy: "pairing",
+      allowFrom: ["+15555550123"],
+      groups: {
+        "*": { requireMention: true }
+      }
+    },
+    telegram: {
+      enabled: true,
+      dmPolicy: "allowlist",
+      allowFrom: ["123456789"]
+    }
+  }
+}
+\end{lstlisting}
+
+\section{Routing Mechanism}
+
+OpenClaw routes replies \textbf{back to the originating channel}. Routing is deterministic:
+
+\begin{itemize}
+  \item The model does \textbf{not} choose the channel
+  \item Replies always return to the source of the inbound message
+  \item In multi-channel scenarios, Binding rules route to different Agents
+\end{itemize}
+
+\subsection{Session Key Format}
+
+\begin{itemize}
+  \item DM: \texttt{agent:<agentId>:<mainKey>}
+  \item Group: \texttt{agent:<agentId>:<channel>:group:<groupId>}
+  \item Thread: Append \texttt{:thread:<threadId>} to the base key
+\end{itemize}
+
+\section{Multiple Accounts}
+
+Channels that support multiple accounts (e.g., WhatsApp) use \texttt{accountId} to identify each login instance.
+Different \texttt{accountId} values can route to different Agents, enabling a single server to host multiple numbers.

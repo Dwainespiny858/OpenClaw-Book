@@ -1,0 +1,162 @@
+\chapter{Sandbox (Isolated Execution)}
+
+\section{Overview}
+
+OpenClaw can \textbf{run tools inside Docker containers} to reduce the blast radius. Sandbox isolation is \textbf{optional} and controlled by configuration. The Gateway itself remains on the host; only tool execution is isolated in containers.
+
+Config path: \texttt{agents.defaults.sandbox.*}
+
+\section{What Gets Sandboxed}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Sandboxed} & \textbf{Not Sandboxed} \\
+\midrule
+Tool execution (exec, read, write, edit, etc.) & Gateway process itself \\
+Sandbox browser (optional) & Elevated tools (\texttt{tools.elevated}) \\
+ & Tools explicitly allowed to run on host \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Sandbox Modes}
+
+\texttt{agents.defaults.sandbox.mode}:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Mode} & \textbf{Behavior} \\
+\midrule
+\texttt{off} & No sandbox \\
+\texttt{non-main} & Sandbox for non-main sessions only (default) \\
+\texttt{all} & All sessions run in sandbox \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Scope}
+
+\texttt{agents.defaults.sandbox.scope}:
+
+\begin{itemize}
+  \item \texttt{session} (default): One container per session
+  \item \texttt{agent}: One container per agent
+  \item \texttt{shared}: All sandboxed sessions share one container
+\end{itemize}
+
+\section{Workspace Access}
+
+\texttt{agents.defaults.sandbox.workspaceAccess}:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Value} & \textbf{Behavior} \\
+\midrule
+\texttt{none} (default) & Uses sandbox workspace (\texttt{\textasciitilde{}/.openclaw/sandboxes}) \\
+\texttt{ro} & Read-only mount of agent workspace \\
+\texttt{rw} & Read-write mount of agent workspace \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Minimal Enable Example}
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    defaults: {
+      sandbox: {
+        mode: "all",
+        scope: "session",
+        workspaceAccess: "none",
+        docker: {
+          image: "openclaw-sandbox:bookworm-slim"
+        }
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\section{Image Build}
+
+\begin{lstlisting}[language=bash]
+# Build sandbox image
+scripts/sandbox-setup.sh
+
+# Build sandbox browser image (optional)
+scripts/sandbox-browser-setup.sh
+\end{lstlisting}
+
+The default sandbox container has \textbf{no network}; override with \texttt{docker.network}.
+
+\section{Custom Bind Mounts}
+
+Mount additional host directories into the container:
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    defaults: {
+      sandbox: {
+        docker: {
+          binds: [
+            "/home/user/source:/source:ro",
+            "/var/run/docker.sock:/var/run/docker.sock"
+          ]
+        }
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\section{setupCommand}
+
+\texttt{setupCommand} runs \textbf{once} after container creation (not per run), used to install additional dependencies:
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    defaults: {
+      sandbox: {
+        docker: {
+          network: "bridge",
+          setupCommand: "apt-get update && apt-get install -y python3"
+        }
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\textbf{Note}: Package installation requires network egress (\texttt{network: "bridge"}) and a writable root filesystem.
+
+\section{Multi-Agent Override}
+
+Each agent can independently override sandbox configuration:
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    list: [{
+      id: "build",
+      sandbox: {
+        mode: "all",
+        docker: {
+          binds: ["/mnt/cache:/cache:rw"]
+        }
+      }
+    }]
+  }
+}
+\end{lstlisting}
+
+\section{Debugging}
+
+\begin{lstlisting}[language=bash]
+openclaw sandbox explain  # Check effective sandbox config
+\end{lstlisting}

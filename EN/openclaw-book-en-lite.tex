@@ -1,30 +1,12 @@
 \documentclass[a4paper,12pt,openany]{book}
 
-% === 中文支持 ===
-\usepackage[UTF8]{ctex}
-\usepackage{xeCJK}
-
-% === Emoji 支持 ===
-% 使用 Noto Emoji 字体（黑白版）渲染 emoji 符号。
-% 需要安装 Noto Emoji 字体：brew install --cask font-noto-emoji
-% 如需彩色 emoji，可切换到 LuaLaTeX + Noto Color Emoji / Apple Color Emoji。
-% 如果字体未安装，优雅降级为直接输出 Unicode 文本。
+% === Unicode Support (XeLaTeX) ===
 \usepackage{fontspec}
-\IfFontExistsTF{Noto Emoji}{%
-  \newfontfamily\emojifont{Noto Emoji}%
-  \newcommand{\emoji}[1]{{\emojifont #1}}%
-}{%
-  \newcommand{\emoji}[1]{#1}%
-}
 
-% === 页面布局 ===
+% === Page Layout ===
 \usepackage[margin=2.5cm,headheight=14.5pt]{geometry}
 
-% === 数学符号 ===
-\usepackage{amsmath}
-\usepackage{amssymb}
-
-% === 代码高亮 ===
+% === Code Highlighting ===
 \usepackage{listings}
 \usepackage{xcolor}
 
@@ -57,7 +39,7 @@
 }
 \lstset{style=mystyle}
 
-% 定义常见语言
+% Define common languages
 \lstdefinelanguage{json}{
     basicstyle=\ttfamily\small,
     string=[s]{"}{"},
@@ -116,7 +98,7 @@
     string=[b]",
 }
 
-% === 超链接 ===
+% === Hyperlinks ===
 \usepackage{hyperref}
 \hypersetup{
     colorlinks=true,
@@ -127,7 +109,7 @@
     pdfencoding=auto,
 }
 
-% === TikZ 图表 ===
+% === TikZ Diagrams ===
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, decorations.pathreplacing, shadows}
 
@@ -171,7 +153,7 @@
 \definecolor{tierorange}{RGB}{249, 115, 22}
 \definecolor{tiergreen}{RGB}{34, 197, 94}
 
-% === 其他包 ===
+% === Other Packages ===
 \usepackage{graphicx}
 \usepackage{longtable}
 \usepackage{booktabs}
@@ -179,64 +161,64 @@
 \usepackage{fancyhdr}
 \usepackage{titlesec}
 
-% === 页眉页脚 ===
+% === Header and Footer ===
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\leftmark}
 \fancyhead[R]{\thepage}
-\fancyfoot[C]{深入理解 OpenClaw：从原理到实践}
+\fancyfoot[C]{OpenClaw Quick Start Guide (Lite Edition)}
 
-% === 标题格式 ===
+% === Title Format ===
 \titleformat{\chapter}[display]
   {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
 \titlespacing*{\chapter}{0pt}{-20pt}{40pt}
 
-% === 文档信息 ===
+% === Document Info ===
 \title{
     \vspace{2cm}
-    {\Huge\textbf{深入理解 OpenClaw：从原理到实践}} \\
+    {\Huge\textbf{OpenClaw Quick Start Guide}} \\
     \vspace{0.5cm}
-    {\Large AI 智能体 Gateway 网关} \\
+    {\Large Lite Edition \textperiodcentered{} Master Core Concepts in 10 Chapters} \\
     \vspace{0.5cm}
-    {\large 多渠道消息平台的完整技术文档}
+    {\large AI Agent Gateway}
     \vspace{2cm}
 }
-\author{OpenClaw 项目组}
+\author{OpenClaw Project Team}
 \date{\today}
 
 \begin{document}
 
-% === 封面 ===
+% === Cover ===
 \maketitle
 \thispagestyle{empty}
 
-% === 版权声明 ===
+% === Copyright Notice ===
 \clearpage
 \thispagestyle{empty}
 \vspace*{\fill}
 \begin{center}
-{\large\textbf{版权声明}}
+{\large\textbf{Copyright Notice}}
 \end{center}
 
 \bigskip
 
-\noindent 本书内容基于 OpenClaw 项目官方文档整理编写。
+\noindent This book is based on the official OpenClaw project documentation, reorganized and compiled for readability.
 
 \medskip
 
-\noindent OpenClaw 项目采用 MIT 许可证，版权归 Peter Steinberger 及其贡献者所有。
+\noindent The OpenClaw project is licensed under the MIT License. Copyright belongs to Peter Steinberger and contributors.
 
 \medskip
 
-\noindent 原始项目：\url{https://github.com/anthropics/openclaw}
+\noindent Original project: \url{https://github.com/anthropics/openclaw}
 
-\noindent 原始许可证：MIT License
+\noindent Original license: MIT License
 
 \noindent Copyright \textcopyright{} 2025 Peter Steinberger
 
 \bigskip
 
-\noindent 本书同样采用 \textbf{MIT 许可证} 进行授权。
+\noindent This book is also licensed under the \textbf{MIT License}.
 
 \bigskip
 
@@ -244,7 +226,7 @@
 
 \medskip
 
-\noindent Copyright \textcopyright{} 2025 OpenClaw 项目组
+\noindent Copyright \textcopyright{} 2025 OpenClaw Project Team
 
 \medskip
 
@@ -268,31 +250,20 @@ fitness for a particular purpose and noninfringement.}
 
 \vspace*{\fill}
 
-% === 目录 ===
+% === Table of Contents ===
 \tableofcontents
 \clearpage
 
-\input{chapters/00_overview}
-\input{chapters/01_start}
-\input{chapters/02_concepts}
-\input{chapters/03_install}
-\input{chapters/04_gateway}
-\input{chapters/05_channels}
-\input{chapters/06_cli}
-\input{chapters/07_tools}
-\input{chapters/08_providers}
-\input{chapters/09_nodes}
-\input{chapters/10_platforms}
-\input{chapters/11_web}
-\input{chapters/12_automation}
-\input{chapters/13_plugins}
-\input{chapters/14_security}
-\input{chapters/15_reference}
-\input{chapters/16_help}
-\input{chapters/17_debug}
-\input{chapters/18_diagnostics}
-\input{chapters/19_experiments}
-\input{chapters/20_refactor}
-\input{chapters/21_deployment}
+\input{chapters-lite/00-quickstart}
+\input{chapters-lite/01-gateway}
+\input{chapters-lite/02-agent}
+\input{chapters-lite/03-channel}
+\input{chapters-lite/04-binding}
+\input{chapters-lite/05-session}
+\input{chapters-lite/06-plugin}
+\input{chapters-lite/07-skill}
+\input{chapters-lite/08-memory}
+\input{chapters-lite/09-sandbox}
+\input{chapters-lite/10-deployment}
 
 \end{document}

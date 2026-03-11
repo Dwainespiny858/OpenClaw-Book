@@ -1,0 +1,150 @@
+\chapter{Quick Start}
+
+\section{What is OpenClaw}
+
+\begin{quote}
+\textit{"De-claw! De-claw!"} — Probably said by a space lobster
+\end{quote}
+
+OpenClaw is an AI Agent Gateway that supports multiple chat platforms including WhatsApp, Telegram, Discord, iMessage, and more.
+It connects chat applications to AI coding agents through a single Gateway process, supporting both local and remote deployment.
+
+\subsection{How It Works}
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=0.8cm and 1.5cm,
+    every node/.style={font=\small},
+    box/.style={draw=blue!50, fill=blue!5, rounded corners=4pt, minimum width=2.8cm, minimum height=0.7cm, align=center},
+    gw/.style={draw=orange!60, fill=orange!10, rounded corners=6pt, minimum width=3.5cm, minimum height=1cm, align=center, font=\bfseries},
+    arr/.style={-{Stealth[length=2.5mm]}, thick, draw=gray!60}
+]
+    % Left: Chat apps
+    \node[box] (wa) {WhatsApp};
+    \node[box, below=of wa] (tg) {Telegram};
+    \node[box, below=of tg] (dc) {Discord};
+    \node[box, below=of dc] (im) {iMessage};
+
+    % Center: Gateway
+    \node[gw, right=2cm of $(tg)!0.5!(dc)$] (gw) {Gateway};
+
+    % Right: Outputs
+    \node[box, right=2cm of gw, yshift=0.8cm] (agent) {AI Agent};
+    \node[box, right=2cm of gw, yshift=-0.8cm] (web) {Web UI};
+
+    % Arrows
+    \foreach \src in {wa, tg, dc, im} {
+        \draw[arr] (\src) -- (gw);
+    }
+    \draw[arr] (gw) -- (agent);
+    \draw[arr] (gw) -- (web);
+\end{tikzpicture}
+\end{center}
+
+The Gateway is the \textbf{single source of truth} for sessions, routing, and channel connections.
+
+\section{Three-Step Installation}
+
+\subsection{Step 1: Install OpenClaw}
+
+\begin{lstlisting}[language=bash]
+npm install -g openclaw@latest
+\end{lstlisting}
+
+\subsection{Step 2: Run the Onboarding Wizard}
+
+\begin{lstlisting}[language=bash]
+openclaw onboard --install-daemon
+\end{lstlisting}
+
+The onboarding wizard automatically configures:
+\begin{itemize}
+  \item Model/authentication (OAuth or API key recommended)
+  \item Channel login (WhatsApp, Telegram, etc.)
+  \item Daemon (systemd/launchd auto-start on boot)
+\end{itemize}
+
+\subsection{Step 3: Start the Gateway}
+
+\begin{lstlisting}[language=bash]
+openclaw channels login
+openclaw gateway --port 18789
+\end{lstlisting}
+
+Open your browser and visit \texttt{http://127.0.0.1:18789/} to start chatting.
+
+\section{Quickest Experience: Control UI}
+
+No channel configuration needed --- chat directly in the browser:
+
+\begin{lstlisting}[language=bash]
+openclaw dashboard
+\end{lstlisting}
+
+Open \texttt{http://127.0.0.1:18789/} in your browser to start talking with the agent.
+
+\section{Authentication Configuration}
+
+\subsection{Anthropic API Key (Recommended)}
+
+\begin{lstlisting}[language=bash]
+export ANTHROPIC_API_KEY="..."
+openclaw models status
+\end{lstlisting}
+
+Or store the key in the daemon configuration:
+
+\begin{lstlisting}[language=bash]
+cat >> ~/.openclaw/.env <<'EOF'
+ANTHROPIC_API_KEY=...
+EOF
+\end{lstlisting}
+
+\subsection{Verify Installation}
+
+\begin{lstlisting}[language=bash]
+openclaw models status
+openclaw doctor
+\end{lstlisting}
+
+\section{Core Concepts at a Glance}
+
+OpenClaw consists of the following core components, each explained in detail in subsequent chapters:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Concept} & \textbf{Description} & \textbf{Config Path} \\
+\midrule
+Gateway & Core AI gateway, WS/HTTP server & \texttt{gateway.*} \\
+Agent & AI assistant instance, bound to models/skills & \texttt{agents.list[]} \\
+Channel & Chat platform adapter & \texttt{channels.<name>.*} \\
+Binding & User/group to Agent routing & \texttt{agents.list[].bindings[]} \\
+Session & A conversation with context history & \texttt{session.*} \\
+Plugin & Extension module for tools/channels/hooks & \texttt{plugins.entries.*} \\
+Skill & Agent skill (tools + system prompt) & \texttt{skills.entries.*} \\
+Memory & Long-term memory, vector + full-text search & \texttt{memorySearch.*} \\
+Sandbox & Docker sandbox for isolated execution & \texttt{agents.defaults.sandbox.*} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Configuration File}
+
+The configuration file is located at \texttt{\textasciitilde{}/.openclaw/openclaw.json} (JSON5 format).
+
+\begin{lstlisting}[language=json]
+{
+  channels: {
+    whatsapp: {
+      allowFrom: ["+15555550123"],
+      groups: { "*": { requireMention: true } }
+    }
+  },
+  messages: {
+    groupChat: { mentionPatterns: ["@openclaw"] }
+  }
+}
+\end{lstlisting}
+
+If you \textbf{make no changes}, OpenClaw will run using the built-in Pi binary in RPC mode and create independent sessions per sender.

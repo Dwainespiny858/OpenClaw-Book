@@ -1,0 +1,94 @@
+\chapter{Gateway (Core Engine)}
+
+\section{Overview}
+
+The Gateway is the core process of OpenClaw, responsible for:
+
+\begin{itemize}
+  \item \textbf{Message Routing}: Receiving inbound messages from channels and routing them to the correct Agent
+  \item \textbf{Session Management}: Maintaining all session state (single source of truth)
+  \item \textbf{Agent Runtime}: Embedding pi-agent-core to execute the agent loop
+  \item \textbf{RPC Service}: Exposing WebSocket/HTTP APIs
+  \item \textbf{Plugin Host}: Loading and running all registered plugins
+\end{itemize}
+
+Config path: \texttt{gateway.*}
+
+\section{Startup Methods}
+
+\subsection{Foreground Mode}
+
+\begin{lstlisting}[language=bash]
+openclaw gateway --port 18789
+\end{lstlisting}
+
+\subsection{Daemon Mode}
+
+\begin{lstlisting}[language=bash]
+openclaw daemon install   # Install systemd/launchd service
+openclaw daemon start     # Start the daemon
+openclaw daemon status    # Check status
+\end{lstlisting}
+
+\section{Agent Loop}
+
+Each inbound message triggers a complete agent loop:
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=0.6cm,
+    agentstep/.style={draw=teal!60, fill=teal!8, rounded corners=4pt, minimum width=12cm, minimum height=0.7cm, font=\small, align=left},
+    arr/.style={-{Stealth[length=2.5mm]}, thick, draw=teal!60}
+]
+    \node[agentstep] (s1) {1. Receive inbound message, validate params, resolve session};
+    \node[agentstep, below=of s1] (s2) {2. Route to target Agent, load Skills snapshot};
+    \node[agentstep, below=of s2] (s3) {3. Assemble system prompt (base + Skills + bootstrap context)};
+    \node[agentstep, below=of s3] (s4) {4. Call model for inference, stream assistant response};
+    \node[agentstep, below=of s4] (s5) {5. Execute tool calls (possibly in sandbox)};
+    \node[agentstep, below=of s5] (s6) {6. Persist session, send reply to channel};
+
+    \draw[arr] (s1) -- (s2);
+    \draw[arr] (s2) -- (s3);
+    \draw[arr] (s3) -- (s4);
+    \draw[arr] (s4) -- (s5);
+    \draw[arr] (s5) -- (s6);
+\end{tikzpicture}
+\end{center}
+
+\section{RPC Interface}
+
+The Gateway exposes RPC interfaces via WebSocket and HTTP:
+
+\begin{itemize}
+  \item \texttt{agent} / \texttt{agent.wait}: Trigger agent run
+  \item \texttt{sessions.list}: List sessions
+  \item \texttt{voicecall.*}: Voice call (plugin)
+  \item \texttt{message.send}: Send message to channel
+\end{itemize}
+
+Example (calling RPC via CLI):
+
+\begin{lstlisting}[language=bash]
+openclaw gateway call sessions.list --params '{}'
+\end{lstlisting}
+
+\section{Authentication}
+
+\textbf{Anthropic API key} is recommended:
+
+\begin{lstlisting}[language=bash]
+export ANTHROPIC_API_KEY="..."
+# Or store in daemon env file:
+echo 'ANTHROPIC_API_KEY=...' >> ~/.openclaw/.env
+\end{lstlisting}
+
+OAuth and setup-token flows are also supported. Use \texttt{openclaw models status} to verify authentication status.
+
+\section{Common Operations}
+
+\begin{lstlisting}[language=bash]
+openclaw doctor            # Health check
+openclaw status            # Show storage paths & recent sessions
+openclaw models status     # Check model auth
+openclaw gateway --port N  # Start with custom port
+\end{lstlisting}

@@ -1,0 +1,109 @@
+\chapter{Skill (Agent Skill)}
+
+\section{Overview}
+
+A Skill is an instruction pack that teaches an agent how to use tools. Each Skill is a directory containing \texttt{SKILL.md} (with YAML frontmatter), injected into the system prompt at agent runtime.
+
+Config path: \texttt{skills.entries.*}
+
+\section{Loading Locations and Priority}
+
+Skills are loaded from three locations, with same-name skills overridden by priority:
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=0.5cm,
+    box/.style={draw=violet!50, fill=violet!5, rounded corners=3pt, minimum width=10cm, minimum height=0.7cm, font=\small, align=center},
+    arr/.style={-{Stealth[length=2mm]}, thick, draw=violet!40}
+]
+    \node[box] (w) {\texttt{<workspace>/skills} (Workspace Skills) --- Highest priority};
+    \node[box, below=of w] (l) {\texttt{\textasciitilde/.openclaw/skills} (Managed/Local Skills)};
+    \node[box, below=of l] (b) {Built-in Skills (shipped with installation) --- Lowest priority};
+
+    \draw[arr] (b) -- (l);
+    \draw[arr] (l) -- (w);
+\end{tikzpicture}
+\end{center}
+
+Additional Skills directories can be configured via \texttt{skills.load.extraDirs}.
+
+\section{SKILL.md Format}
+
+\begin{lstlisting}
+---
+name: nano-banana-pro
+description: Generate or edit images via Gemini 3 Pro Image
+metadata:
+  {"openclaw": {"requires": {"bins": ["uv"], "env": ["GEMINI_API_KEY"]}, "primaryEnv": "GEMINI_API_KEY"}}
+---
+
+## Instructions
+
+Use the `nano-banana-pro` tool to generate images...
+\end{lstlisting}
+
+\subsection{Key Frontmatter Fields}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Field} & \textbf{Description} \\
+\midrule
+\texttt{name} & Skill name (required) \\
+\texttt{description} & Short description (required) \\
+\texttt{user-invocable} & Whether to expose as a slash command (default true) \\
+\texttt{metadata.openclaw.requires.bins} & Required binaries \\
+\texttt{metadata.openclaw.requires.env} & Required environment variables \\
+\texttt{metadata.openclaw.requires.config} & Required config entries \\
+\texttt{metadata.openclaw.primaryEnv} & Associated API key variable name \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Gating (Load-Time Filtering)}
+
+OpenClaw filters Skills at load time based on the following conditions:
+
+\begin{itemize}
+  \item \texttt{requires.bins}: Binaries must exist in \texttt{PATH}
+  \item \texttt{requires.env}: Environment variables must exist or be provided in config
+  \item \texttt{requires.config}: Config entries must be truthy
+  \item \texttt{os}: Platform restriction (\texttt{darwin/linux/win32})
+\end{itemize}
+
+Skills without \texttt{metadata.openclaw} are always loaded (unless disabled in config).
+
+\section{Configuration Override}
+
+\begin{lstlisting}[language=json]
+{
+  skills: {
+    entries: {
+      "nano-banana-pro": {
+        enabled: true,
+        apiKey: "YOUR_API_KEY",
+        env: { CUSTOM_VAR: "value" }
+      },
+      "dangerous-skill": { enabled: false }
+    }
+  }
+}
+\end{lstlisting}
+
+\section{ClawHub (Skills Registry)}
+
+\begin{lstlisting}[language=bash]
+clawhub install <skill-name>    # Install to workspace
+clawhub update --all            # Update all skills
+clawhub sync --all              # Scan + publish updates
+\end{lstlisting}
+
+Browse Skills: \href{https://clawhub.com}{https://clawhub.com}
+
+\section{Security Considerations}
+
+\begin{itemize}
+  \item Treat third-party Skills as \textbf{untrusted code} --- read before enabling
+  \item Prefer sandbox isolation for high-risk tools
+  \item \texttt{skills.entries.*.apiKey} injects secrets into the host process (not sandbox)
+\end{itemize}

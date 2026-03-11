@@ -1,0 +1,110 @@
+\chapter{Memory (Long-Term Memory)}
+
+\section{Overview}
+
+OpenClaw memory consists of \textbf{plain Markdown files in the agent workspace}. The model only ``remembers'' what is written to disk --- memory files are the single source of truth.
+
+Config path: \texttt{memorySearch.*}
+
+\section{Memory Files}
+
+The default workspace layout uses two memory tiers:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{File} & \textbf{Purpose} & \textbf{When Loaded} \\
+\midrule
+\texttt{memory/YYYY-MM-DD.md} & Daily log (append-only) & Today's and yesterday's loaded at session start \\
+\texttt{MEMORY.md} & Curated long-term memory & Loaded only in main private sessions \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Located under the workspace (default \texttt{\textasciitilde{}/.openclaw/workspace}).
+
+\section{When to Write Memory}
+
+\begin{itemize}
+  \item Decisions, preferences, and persistent facts → \texttt{MEMORY.md}
+  \item Daily notes and run context → \texttt{memory/YYYY-MM-DD.md}
+  \item When the user says ``remember this'' → Write immediately
+\end{itemize}
+
+\textbf{Tip}: If you want something to persist, \textbf{explicitly ask} the agent to write it to memory.
+
+\section{Automatic Memory Flush}
+
+When a session approaches automatic compaction, OpenClaw triggers a \textbf{silent agent turn}, reminding the model to write persistent memory before context compaction.
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    defaults: {
+      compaction: {
+        memoryFlush: {
+          enabled: true,
+          softThresholdTokens: 4000
+        }
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\section{Vector Memory Search}
+
+OpenClaw builds a small vector index on memory files, supporting semantic queries (finding relevant notes even with different wording).
+
+\subsection{Default Behavior}
+
+\begin{itemize}
+  \item Enabled by default, watches memory file changes
+  \item Automatically selects embedding provider: local → OpenAI → Gemini
+  \item Uses sqlite-vec for accelerated vector search
+\end{itemize}
+
+\subsection{Provider Configuration}
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    defaults: {
+      memorySearch: {
+        provider: "openai",
+        remote: { apiKey: "YOUR_OPENAI_API_KEY" }
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+Supported providers: \texttt{openai}, \texttt{gemini}, \texttt{local} (node-llama-cpp).
+
+\subsection{Extra Memory Paths}
+
+Index Markdown files outside the default workspace:
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    defaults: {
+      memorySearch: {
+        extraPaths: ["../team-docs", "/srv/shared-notes/overview.md"]
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\section{Full-Text Search}
+
+In addition to vector search, OpenClaw supports SQLite FTS5-based full-text search, which can be combined with vector search for improved recall.
+
+\section{Memory Search Tool}
+
+Memory search is provided by the active memory plugin (default: \texttt{memory-core}). To disable:
+
+\begin{lstlisting}[language=json]
+{ plugins: { slots: { memory: "none" } } }
+\end{lstlisting}

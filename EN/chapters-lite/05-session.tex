@@ -1,0 +1,100 @@
+\chapter{Session (Conversation)}
+
+\section{Overview}
+
+A Session is a container for a continuous conversation between a user and an agent, containing context history, token counts, and routing metadata.
+
+Config path: \texttt{session.*}
+
+\section{Session Ownership}
+
+All session state is \textbf{owned by the Gateway}. UI clients (macOS app, WebChat, etc.) must query the Gateway rather than reading local files.
+
+\subsection{Storage Location}
+
+\begin{itemize}
+  \item Session file: \texttt{\textasciitilde{}/.openclaw/agents/<id>/sessions/sessions.json}
+  \item Conversation log: \texttt{\textasciitilde{}/.openclaw/agents/<id>/sessions/<sessionId>.jsonl}
+\end{itemize}
+
+\section{Session Key Mapping}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Source} & \textbf{Session Key Format} \\
+\midrule
+DM (default) & \texttt{agent:<agentId>:<mainKey>} \\
+Group chat & \texttt{agent:<agentId>:<channel>:group:<groupId>} \\
+Thread/topic & Base key + \texttt{:thread:<threadId>} \\
+Cron job & \texttt{cron:<jobId>} \\
+Webhook & \texttt{hook:<hookId>} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{DM Grouping Strategy (dmScope)}
+
+\texttt{session.dmScope} controls how DMs are grouped:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Value} & \textbf{Behavior} \\
+\midrule
+\texttt{main} (default) & All DMs share the main session \\
+\texttt{per-peer} & Isolated by sender ID \\
+\texttt{per-channel-peer} & Isolated by channel + sender \\
+\texttt{per-account-channel-peer} & Isolated by account + channel + sender \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Session Lifecycle}
+
+\subsection{Reset Strategy}
+
+\begin{itemize}
+  \item \textbf{Daily reset} (default): At 4:00 AM local time on the Gateway host
+  \item \textbf{Idle reset} (optional): Sliding idle window (\texttt{idleMinutes})
+  \item When both are configured, whichever expires first triggers a new session
+\end{itemize}
+
+\subsection{Manual Reset}
+
+Send \texttt{/new} or \texttt{/reset} in chat to create a new session.
+
+\section{Configuration Example}
+
+\begin{lstlisting}[language=json]
+{
+  session: {
+    dmScope: "main",
+    reset: {
+      mode: "daily",
+      atHour: 4,
+      idleMinutes: 120
+    },
+    resetByType: {
+      dm: { mode: "idle", idleMinutes: 240 },
+      group: { mode: "idle", idleMinutes: 120 }
+    },
+    identityLinks: {
+      alice: ["telegram:123456789", "discord:987654321012345678"]
+    }
+  }
+}
+\end{lstlisting}
+
+\texttt{identityLinks} maps a user's different channel IDs to a unified identity, enabling cross-channel session sharing.
+
+\section{Common Commands}
+
+\begin{lstlisting}[language=bash]
+openclaw status                      # Show sessions
+openclaw sessions --json             # Export all sessions
+/status                              # In chat: check session info
+/new                                 # In chat: start new session
+/compact                             # In chat: compact context
+/stop                                # In chat: abort current run
+\end{lstlisting}

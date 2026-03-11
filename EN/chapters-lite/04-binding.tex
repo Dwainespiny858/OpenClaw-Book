@@ -1,0 +1,106 @@
+\chapter{Binding (Route Binding)}
+
+\section{Overview}
+
+A Binding is a rule that routes inbound messages to a specified Agent. In multi-agent mode, Bindings determine which ``brain'' handles which messages.
+
+Config path: \texttt{agents.list[].bindings[]} (or top-level \texttt{bindings[]})
+
+\section{Routing Priority}
+
+Routing is \textbf{deterministic} --- \textbf{most specific wins}:
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=0.5cm,
+    rule/.style={draw=blue!50, fill=blue!5, rounded corners=3pt, minimum width=12cm, minimum height=0.6cm, font=\small, align=left},
+    arr/.style={-{Stealth[length=2mm]}, thick, draw=blue!40}
+]
+    \node[rule] (r1) {1. \texttt{peer} exact match (DM/group/channel ID)};
+    \node[rule, below=of r1] (r2) {2. \texttt{guildId} match (Discord)};
+    \node[rule, below=of r2] (r3) {3. \texttt{teamId} match (Slack)};
+    \node[rule, below=of r3] (r4) {4. \texttt{accountId} match (channel account)};
+    \node[rule, below=of r4] (r5) {5. Channel-level match (\texttt{accountId: "*"})};
+    \node[rule, below=of r5] (r6) {6. Default Agent (\texttt{agents.list[].default} or first)};
+
+    \draw[arr] (r1) -- (r2);
+    \draw[arr] (r2) -- (r3);
+    \draw[arr] (r3) -- (r4);
+    \draw[arr] (r4) -- (r5);
+    \draw[arr] (r5) -- (r6);
+\end{tikzpicture}
+\end{center}
+
+\section{Core Concepts}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Term} & \textbf{Description} \\
+\midrule
+\texttt{agentId} & A ``brain'' (workspace + auth + sessions) \\
+\texttt{accountId} & Channel account instance (e.g., WhatsApp \texttt{"personal"} vs \texttt{"biz"}) \\
+\texttt{binding} & Routes via (channel, accountId, peer) to agentId \\
+\texttt{peer} & Remote identifier (\texttt{kind: "dm"|"group"|"channel"} + \texttt{id}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Configuration Examples}
+
+\subsection{Two WhatsApp Accounts → Two Agents}
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    list: [
+      { id: "home", default: true, workspace: "~/.openclaw/workspace-home" },
+      { id: "work", workspace: "~/.openclaw/workspace-work" }
+    ]
+  },
+  bindings: [
+    { agentId: "home", match: { channel: "whatsapp", accountId: "personal" } },
+    { agentId: "work", match: { channel: "whatsapp", accountId: "biz" } }
+  ]
+}
+\end{lstlisting}
+
+\subsection{One Number, Split by Sender}
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    list: [
+      { id: "alex", workspace: "~/.openclaw/workspace-alex" },
+      { id: "mia", workspace: "~/.openclaw/workspace-mia" }
+    ]
+  },
+  bindings: [
+    { agentId: "alex", match: { channel: "whatsapp", peer: { kind: "dm", id: "+15551230001" } } },
+    { agentId: "mia", match: { channel: "whatsapp", peer: { kind: "dm", id: "+15551230002" } } }
+  ]
+}
+\end{lstlisting}
+
+\subsection{Route Specific Group to Specific Agent}
+
+\begin{lstlisting}[language=json]
+{
+  bindings: [
+    {
+      agentId: "work",
+      match: {
+        channel: "whatsapp",
+        accountId: "personal",
+        peer: { kind: "group", id: "1203630...@g.us" }
+      }
+    }
+  ]
+}
+\end{lstlisting}
+
+\section{Verification}
+
+\begin{lstlisting}[language=bash]
+openclaw agents list --bindings
+\end{lstlisting}

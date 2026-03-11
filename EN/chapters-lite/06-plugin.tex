@@ -1,0 +1,132 @@
+\chapter{Plugin (Extension Module)}
+
+\section{Overview}
+
+A Plugin is an extension module for OpenClaw that can register:
+
+\begin{itemize}
+  \item \textbf{Agent tools} (JSON schema functions)
+  \item \textbf{Channel adapters} (new chat platforms)
+  \item \textbf{Lifecycle hooks} (intercept message/tool/session events)
+  \item \textbf{Memory providers}
+\end{itemize}
+
+Config path: \texttt{plugins.entries.*}
+
+\section{Installing Plugins}
+
+\begin{lstlisting}[language=bash]
+# From npm (recommended)
+openclaw plugins install @openclaw/voice-call
+
+# From local folder (dev)
+openclaw plugins install ./extensions/my-plugin
+\end{lstlisting}
+
+After installation, \textbf{restart the Gateway} to load the plugin.
+
+\section{Plugin Manifest}
+
+Each plugin must provide \texttt{openclaw.plugin.json}:
+
+\begin{lstlisting}[language=json]
+{
+  "id": "voice-call",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}
+\end{lstlisting}
+
+Optional fields: \texttt{kind}, \texttt{channels}, \texttt{providers}, \texttt{skills}, \texttt{name}, \texttt{description}.
+
+\section{Registering Agent Tools}
+
+\begin{lstlisting}[language=typescript]
+import { Type } from "@sinclair/typebox";
+
+export default function (api) {
+  api.registerTool({
+    name: "my_tool",
+    description: "Do a thing",
+    parameters: Type.Object({
+      input: Type.String(),
+    }),
+    async execute(_id, params) {
+      return { content: [{ type: "text", text: params.input }] };
+    },
+  });
+}
+\end{lstlisting}
+
+\subsection{Optional Tools}
+
+Optional tools must be explicitly added to the agent's allow list:
+
+\begin{lstlisting}[language=json]
+{
+  agents: {
+    list: [{
+      id: "main",
+      tools: {
+        allow: ["workflow_tool", "group:plugins"]
+      }
+    }]
+  }
+}
+\end{lstlisting}
+
+\section{Plugin Hooks}
+
+Plugins can register the following lifecycle hooks:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Hook} & \textbf{Timing} \\
+\midrule
+\texttt{before\_agent\_start} & Before run starts, inject context \\
+\texttt{agent\_end} & After completion, inspect result \\
+\texttt{before\_tool\_call} & Before tool call, intercept params \\
+\texttt{after\_tool\_call} & After tool call, intercept result \\
+\texttt{message\_received} & Inbound message \\
+\texttt{message\_sending} & Outbound message (before sending) \\
+\texttt{session\_start / session\_end} & Session lifecycle \\
+\texttt{gateway\_start / gateway\_stop} & Gateway lifecycle \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Configuration Example}
+
+\begin{lstlisting}[language=json]
+{
+  plugins: {
+    entries: {
+      "voice-call": {
+        enabled: true,
+        config: {
+          provider: "twilio",
+          fromNumber: "+15550001234",
+          twilio: {
+            accountSid: "ACxxxxxxxx",
+            authToken: "..."
+          }
+        }
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\section{Community Plugins}
+
+Community-maintained plugins can be installed via npm, for example:
+
+\begin{itemize}
+  \item \textbf{WeChat}: \texttt{openclaw plugins install @icesword760/openclaw-wechat}
+  \item \textbf{Voice Call}: \texttt{openclaw plugins install @openclaw/voice-call}
+  \item \textbf{Zalo}: \texttt{openclaw plugins install @openclaw/zalouser}
+\end{itemize}
