@@ -10,8 +10,8 @@ LITE_SOURCES = $(LITE).tex $(wildcard chapters-lite/*.tex)
 
 .PHONY: all pdf clean distclean view watch help lite lite-quick lite-view lite-pdf
 
-# 默认目标：编译完整版 PDF
-all: pdf
+# 默认目标：编译完整版 + 精简版 PDF
+all: pdf lite-pdf
 
 # === 完整版 ===
 
@@ -79,7 +79,7 @@ help:
 	@echo "可用目标："
 	@echo ""
 	@echo "  === 完整版 ==="
-	@echo "  make          — 编译完整版 PDF（两次，含目录）"
+	@echo "  make          — 编译完整版 + 精简版 PDF（两次，含目录）"
 	@echo "  make quick    — 完整版快速编译（一次，草稿预览）"
 	@echo "  make view     — 编译完整版并打开 PDF"
 	@echo "  make watch    — 监听完整版文件变化自动编译"

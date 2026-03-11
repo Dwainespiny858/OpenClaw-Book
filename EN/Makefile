@@ -10,8 +10,8 @@ LITE_SOURCES = $(LITE).tex $(wildcard chapters-lite/*.tex)
 
 .PHONY: all pdf clean distclean view watch help lite lite-quick lite-view lite-pdf
 
-# Default target: build PDF
-all: pdf
+# Default target: build Full + Lite PDF
+all: pdf lite-pdf
 
 # === Full Edition ===
 
@@ -79,7 +79,7 @@ help:
 	@echo "Available targets:"
 	@echo ""
 	@echo "  === Full Edition ==="
-	@echo "  make          — Build PDF (twice, with TOC)"
+	@echo "  make          — Build Full + Lite PDF (twice, with TOC)"
 	@echo "  make quick    — Quick build (single pass, draft preview)"
 	@echo "  make view     — Build and open PDF"
 	@echo "  make watch    — Watch for file changes and auto-build"
